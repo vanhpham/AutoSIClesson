@@ -1,0 +1,39 @@
+# Python
+.venv/
+Src/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# PyInstaller (chỉ ignore trong main branch)
+build/
+dist/
+
+# Build and deployment files (chỉ cho release branch)
+# Uncomment these lines in main branch, comment in release branch
+.github/
+build.bat
+build.sh
+AutoSIC.spec
+BUILD_README.md
+create_icon.py
+setup-release-branch.bat
+setup-release-branch.sh
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
