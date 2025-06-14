@@ -129,42 +129,44 @@ class AutomationCore:
         except Exception as e:
             self._log(f"Lỗi khi scroll tìm expand: {str(e)}")
             return None
-    def handle_play_button_detected(self):
-
+    
+    def handle_play_button_detected(self) -> list:
+        """
+        Xử lý khi phát hiện play button (video đã kết thúc)
+        
+        Returns:
+            list: Danh sách lessons tìm được hoặc [] nếu không có
+        """
         try:
-            self._log("Phát hiện play button, đang tìm lessons...")
+            self._log("Phát hiện Play button - Video đã kết thúc!")
             
-            # Tìm tất cả lessons hiện có
+            if self.on_stats_update:
+                self.on_stats_update('play_buttons_detected')
+            
+            # Kiểm tra xem có đang bị dừng không trước khi tiếp tục
+            if not self.is_running:
+                self._log("Automation đã bị dừng - không tìm lesson tiếp theo")
+                return []
+
+            self._log("Tìm lesson tiếp theo...")
             lessons = self.image_detector.detect_all_lesson_images()
             
+            # Kiểm tra lại trước khi xử lý
+            if not self.is_running:
+                self._log("Automation đã bị dừng - không xử lý lesson")
+                return []
+            
             if lessons:
-                self._log(f"Tìm thấy {len(lessons)} lesson(s)")
-
-                # Click vào lesson đầu tiên
-                first_lesson = lessons[0]
-                center_x = first_lesson['left'] + first_lesson['width'] // 2
-                center_y = first_lesson['top'] + first_lesson['height'] // 2
-
-                self._log(f"Click vào lesson đầu tiên tại ({center_x}, {center_y})")
-
-                # Đảm bảo con trỏ được di chuyển đến vị trí lesson trước khi click
-                pyautogui.moveTo(center_x, center_y, duration=0.5)
-                time.sleep(0.2)
-                
-                if not self.is_running:
-                    return False
-                    
-                pyautogui.click()
-                time.sleep(1)
-                
-                return True
+                self._log(f"Tìm thấy {len(lessons)} lesson(s) đang hiển thị")
+                return lessons
             else:
-                self._log("Không tìm thấy lesson nào sau khi phát hiện play button")
-                return False
+                # Không có lessons đang hiển thị, tìm kiếm như bước khởi tạo
+                self._log("Không tìm thấy lesson nào! Thực hiện tìm kiếm như bước khởi tạo...")
+                return self.handle_no_lessons_scenario()
                 
         except Exception as e:
             self._log(f"Lỗi khi xử lý play button: {str(e)}")
-            return False
+            return []
     
     def handle_no_lessons_scenario(self) -> list:
         """
