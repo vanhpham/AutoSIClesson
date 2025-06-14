@@ -36,7 +36,7 @@ class LoopDetector:
         Returns:
             bool: True nếu cần auto restart, False nếu không
         """
-        is_play_button_action = "play button" in action.lower()
+        is_play_button_action = "check_play_button" in action.lower()
 
         if is_play_button_action:
             # Bỏ qua hoàn toàn các action liên quan đến play button
@@ -66,7 +66,7 @@ class LoopDetector:
                 if self.on_auto_restart_callback:
                     self.on_auto_restart_callback()
 
-                return True
+                return True  # Cần auto restart
         else:
             # Hành động mới, không phải lặp của hành động trước đó
             self.loop_detection['last_action'] = action
