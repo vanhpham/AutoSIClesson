@@ -73,17 +73,59 @@ class ImageDetector:
     
     def detect_all_lesson_images(self) -> List[Tuple[int, int, int, int]]:
         """
-        Detect tất cả các vị trí khớp với hình ảnh Lesson_image.png trên màn hình
+        Detect tất cả các vị trí khớp với hình ảnh Lesson_image.png và Lesson_unfinish_bold_image.png trên màn hình
         
         Returns:
             List[Tuple[int, int, int, int]]: Danh sách các vị trí (x, y, width, height) 
             được sắp xếp từ trên xuống dưới theo tọa độ y
         """
         try:
-            template = self._load_template("lesson_unfinish")
-            if template is None:
+            all_matches = []
+            
+            # Detect với template lesson_unfinish
+            template1 = self._load_template("lesson_unfinish")
+            if template1 is not None:
+                matches1 = self._detect_with_template(template1, "lesson_unfinish")
+                all_matches.extend(matches1)
+            
+            # Detect với template lesson_unfinish_bold
+            template2 = self._load_template("lesson_unfinish_bold")
+            if template2 is not None:
+                matches2 = self._detect_with_template(template2, "lesson_unfinish_bold")
+                all_matches.extend(matches2)
+            
+            if not all_matches:
+                print("Tìm thấy 0 vị trí khớp với hình ảnh lesson")
                 return []
             
+            # Loại bỏ các matches trùng lặp giữa 2 template
+            filtered_matches = self._filter_duplicate_matches(all_matches, distance_threshold=20)
+            
+            # Sắp xếp theo tọa độ y (từ trên xuống dưới)
+            filtered_matches.sort(key=lambda match: match[1])
+            
+            print(f"Tìm thấy {len(filtered_matches)} vị trí khớp với hình ảnh lesson")
+            for i, (x, y, w, h) in enumerate(filtered_matches):
+                print(f"Vị trí {i+1}: x={x}, y={y}, width={w}, height={h}")
+            
+            return filtered_matches
+            
+        except Exception as e:
+            print(f"Lỗi khi detect lesson images: {str(e)}")
+            return []
+    
+    def _detect_with_template(self, template: np.ndarray, template_name: str) -> List[Tuple[int, int, int, int]]:
+        """
+        Detect với một template cụ thể
+        
+        Args:
+            template: Template image
+            template_name: Tên template để debug
+            
+        Returns:
+            List các matches tìm được
+        """
+        try:
             screenshot_cv = self._get_screenshot()
             
             # Lấy kích thước template
@@ -102,20 +144,11 @@ class ImageDetector:
                 x, y = pt
                 matches.append((x, y, template_width, template_height))
             
-            # Loại bỏ các matches trùng lặp
-            filtered_matches = self._filter_duplicate_matches(matches)
-            
-            # Sắp xếp theo tọa độ y (từ trên xuống dưới)
-            filtered_matches.sort(key=lambda match: match[1])
-            
-            print(f"Tìm thấy {len(filtered_matches)} vị trí khớp với hình ảnh lesson")
-            for i, (x, y, w, h) in enumerate(filtered_matches):
-                print(f"Vị trí {i+1}: x={x}, y={y}, width={w}, height={h}")
-            
-            return filtered_matches
+            print(f"Template '{template_name}' tìm thấy {len(matches)} matches")
+            return matches
             
         except Exception as e:
-            print(f"Lỗi khi detect lesson images: {str(e)}")
+            print(f"Lỗi khi detect với template '{template_name}': {str(e)}")
             return []
     
     def detect_play_button(self) -> Optional[Tuple[int, int, int, int]]:

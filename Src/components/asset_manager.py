@@ -42,6 +42,10 @@ class AssetManager:
                 "file_name": "Lesson_unfinish_image.png",
                 "description": "Hình ảnh lesson chưa hoàn thành - dùng để detect lessons có thể click"
             },
+            "lesson_unfinish_bold": {
+                "file_name": "Lesson_unfinish_bold_image.png",
+                "description": "Hình ảnh lesson chưa hoàn thành (bold) - dùng để detect lessons có thể click"
+            },
             "play_button": {
                 "file_name": "Play_button.png",
                 "description": "Nút play video - dùng để detect khi video kết thúc"

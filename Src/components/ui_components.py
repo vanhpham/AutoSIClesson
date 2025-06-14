@@ -24,7 +24,7 @@ class AutoSICUI:
     def setup_window(self):
         """Thiết lập cửa sổ chính"""
         self.root.title("AutoSIC - Tự động chạy bài học")
-        self.root.geometry("600x1000+2200+200")
+        self.root.geometry("800x1000+2000+200")
         self.root.resizable(True, True)
         self.root.attributes('-topmost', True)  # Thêm dòng này để cửa sổ luôn ở trên cùng
     
