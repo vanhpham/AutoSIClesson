@@ -130,16 +130,16 @@ class AutomationCore:
             self._log(f"Lỗi khi scroll tìm expand: {str(e)}")
             return None
     
-    def handle_no_lessons_scenario(self) -> bool:
+    def handle_no_lessons_scenario(self) -> list:
         """
         Xử lý khi không tìm thấy lessons
         
         Returns:
-            bool: True nếu tìm thấy lessons sau khi xử lý, False nếu không
+            list: Danh sách lessons tìm được sau khi xử lý, hoặc [] nếu không có
         """
         # Kiểm tra trạng thái trước khi bắt đầu
         if not self.is_running:
-            return False
+            return []
             
         self._log("Không tìm thấy lesson nào! Tìm kiếm Expand button...")
         
@@ -151,7 +151,7 @@ class AutomationCore:
         
         # Kiểm tra trước khi click
         if not self.is_running:
-            return False
+            return []
         
         # Click expand button đầu tiên
         center_x, center_y = self.click_center(expand_btn)
@@ -163,7 +163,7 @@ class AutomationCore:
         # Đợi expand với khả năng thoát sớm
         for i in range(20):  # 2 giây
             if not self.is_running:
-                return False
+                return []
             time.sleep(0.1)
         
         # Tìm lại lessons sau khi expand
@@ -172,7 +172,7 @@ class AutomationCore:
         
         if lessons:
             self._log(f"Tìm thấy {len(lessons)} lesson(s) sau khi expand!")
-            return True
+            return lessons
         
         # Nếu vẫn không có lessons, thử scroll để tìm expand tiếp theo
         self._log("Vẫn không tìm thấy lesson sau khi expand! Thử scroll để tìm expand button tiếp theo...")
@@ -184,7 +184,7 @@ class AutomationCore:
         
         # Kiểm tra trước khi click expand thứ 2
         if not self.is_running:
-            return False
+            return []
         
         # Click expand button thứ 2
         center_x2, center_y2 = self.click_center(next_expand)
@@ -196,7 +196,7 @@ class AutomationCore:
         # Đợi expand thứ 2
         for i in range(20):  # 2 giây
             if not self.is_running:
-                return False
+                return []
             time.sleep(0.1)
         
         # Tìm lại lessons sau khi expand thứ 2
@@ -205,64 +205,21 @@ class AutomationCore:
         
         if lessons:
             self._log(f"Tìm thấy {len(lessons)} lesson(s) sau khi expand và scroll!")
-            return True
+            return lessons
         else:
             self._log("Vẫn không tìm thấy lesson sau khi expand! Thử scroll liên tục để tìm...")
             return self.scroll_and_find_lessons_or_expand((center_x2, center_y2))
     
-    def handle_play_button_detected(self) -> bool:
-        """
-        Xử lý khi phát hiện play button (video đã kết thúc)
-        
-        Returns:
-            bool: True nếu xử lý thành công, False nếu có lỗi
-        """
-        self._log("Phát hiện Play button - Video đã kết thúc!")
-        
-        if self.on_stats_update:
-            self.on_stats_update('play_buttons_detected')
-        
-        # Kiểm tra xem có đang bị dừng không trước khi tiếp tục
-        if not self.is_running:
-            self._log("Automation đã bị dừng - không tìm lesson tiếp theo")
-            return False
-
-        self._log("Tìm lesson tiếp theo.")
-        lessons = self.image_detector.detect_all_lesson_images()
-        
-        # Kiểm tra lại trước khi click
-        if not self.is_running:
-            self._log("Automation đã bị dừng - không click lesson")
-            return False
-        
-        if lessons:
-            # Có lessons khả dụng, click vào lesson đầu tiên
-            center_x, center_y = self.click_center(lessons[0])
-            self._log(f"Click vào lesson đầu tiên tại ({center_x}, {center_y})")
-            
-            if self.on_stats_update:
-                self.on_stats_update('lessons_clicked')
-            
-            # Thêm delay ngắn để tránh click liên tiếp
-            for i in range(20):  # 2 seconds delay với khả năng thoát sớm
-                if not self.is_running:
-                    return False
-                time.sleep(0.1)
-            return True
-        else:
-            # Không có lessons, xử lý expand scenario
-            return self.handle_expand_scenario()
-    
-    def handle_expand_scenario(self) -> bool:
+    def handle_expand_scenario(self) -> list:
         """
         Xử lý khi cần expand để tìm lessons
         
         Returns:
-            bool: True nếu tìm thấy lessons, False nếu không
+            list: Danh sách lessons tìm được sau khi xử lý, hoặc [] nếu không có
         """
         # Kiểm tra trạng thái trước khi bắt đầu
         if not self.is_running:
-            return False
+            return []
             
         self._log("Không tìm thấy lesson - Tìm expand button...")
         expand_btn = self.image_detector.detect_expand_button()
@@ -274,7 +231,7 @@ class AutomationCore:
         
         # Kiểm tra trước khi click
         if not self.is_running:
-            return False
+            return []
             
         center_x, center_y = self.click_center(expand_btn)
         self._log(f"Click Expand button tại ({center_x}, {center_y})")
@@ -285,7 +242,7 @@ class AutomationCore:
         # Đợi expand với khả năng thoát sớm
         for i in range(20):  # 2 giây
             if not self.is_running:
-                return False
+                return []
             time.sleep(0.1)
         
         # Tìm lại lessons sau khi expand
@@ -293,72 +250,38 @@ class AutomationCore:
         lessons = self.image_detector.detect_all_lesson_images()
         
         if lessons:
-            # Kiểm tra trước khi click lesson
+            return lessons
+        self._log("Vẫn không có lesson - Scroll tìm expand tiếp theo...")
+        next_expand = self.scroll_and_find_expand((center_x, center_y), max_scrolls=10)
+        
+        if not next_expand:
+            # Không tìm thấy expand button, thử scroll tìm lesson trực tiếp
+            self._log("Không tìm thấy expand button tiếp theo! Thử scroll tìm lesson trực tiếp...")
+            return self.scroll_and_find_lessons_or_expand((center_x, center_y))
+        
+        # Kiểm tra trước khi click expand thứ 2
+        if not self.is_running:
+            return []
+            
+        center_x2, center_y2 = self.click_center(next_expand)
+        self._log(f"Click expand button tiếp theo tại ({center_x2}, {center_y2})")
+        
+        if self.on_stats_update:
+            self.on_stats_update('expand_clicks')
+        
+        # Đợi expand thứ 2
+        for i in range(20):  # 2 giây
             if not self.is_running:
-                return False
-                
-            # Có lessons sau expand, click vào lesson đầu tiên
-            center_x, center_y = self.click_center(lessons[0])
-            self._log(f"Click vào lesson đầu tiên sau expand tại ({center_x}, {center_y})")
-            
-            if self.on_stats_update:
-                self.on_stats_update('lessons_clicked')
-            
-            # Delay với khả năng thoát sớm
-            for i in range(20):  # 2 giây
-                if not self.is_running:
-                    return False
-                time.sleep(0.1)
-            return True
+                return []
+            time.sleep(0.1)
+        
+        # Tìm lessons sau expand thứ 2
+        lessons = self.image_detector.detect_all_lesson_images()
+        if lessons:
+            return lessons
         else:
-            # Vẫn không có lessons, thử scroll để tìm expand tiếp theo
-            self._log("Vẫn không có lesson - Scroll tìm expand tiếp theo...")
-            next_expand = self.scroll_and_find_expand((center_x, center_y), max_scrolls=10)
-            
-            if not next_expand:
-                # Không tìm thấy expand button, thử scroll tìm lesson trực tiếp
-                self._log("Không tìm thấy expand button tiếp theo! Thử scroll tìm lesson trực tiếp...")
-                return self.scroll_and_find_lessons_or_expand((center_x, center_y))
-            
-            # Kiểm tra trước khi click expand thứ 2
-            if not self.is_running:
-                return False
-                
-            center_x2, center_y2 = self.click_center(next_expand)
-            self._log(f"Click expand button tiếp theo tại ({center_x2}, {center_y2})")
-            
-            if self.on_stats_update:
-                self.on_stats_update('expand_clicks')
-            
-            # Đợi expand thứ 2
-            for i in range(20):  # 2 giây
-                if not self.is_running:
-                    return False
-                time.sleep(0.1)
-            
-            # Tìm lessons sau expand thứ 2
-            lessons = self.image_detector.detect_all_lesson_images()
-            if lessons:
-                # Kiểm tra trước khi click
-                if not self.is_running:
-                    return False
-                    
-                center_x, center_y = self.click_center(lessons[0])
-                self._log(f"Click lesson sau expand và scroll tại ({center_x}, {center_y})")
-                
-                if self.on_stats_update:
-                    self.on_stats_update('lessons_clicked')
-                
-                # Delay cuối cùng
-                for i in range(20):  # 2 giây
-                    if not self.is_running:
-                        return False
-                    time.sleep(0.1)
-                return True
-            else:
-                # Vẫn không tìm thấy lesson, thử scroll liên tục
-                self._log("Vẫn không tìm thấy lesson sau expand! Thử scroll liên tục để tìm...")
-                return self.scroll_and_find_lessons_or_expand((center_x2, center_y2))
+            self._log("Vẫn không tìm thấy lesson sau expand! Thử scroll liên tục để tìm...")
+            return self.scroll_and_find_lessons_or_expand((center_x2, center_y2))
     
     def automation_loop(self):
         """Vòng lặp automation chính"""
@@ -374,11 +297,7 @@ class AutomationCore:
                 return
             
             if not lessons:
-                if not self.handle_no_lessons_scenario():
-                    self.stop_automation()
-                    return
-                # Tìm lại lessons sau khi xử lý
-                lessons = self.image_detector.detect_all_lesson_images()
+                lessons = self.handle_no_lessons_scenario()
             
             # Kiểm tra dừng trước khi click lesson
             if not self.is_running:
@@ -414,8 +333,21 @@ class AutomationCore:
                     return
                 
                 if play_btn:
-                    if not self.handle_play_button_detected():
-                        self._log("Có lỗi khi xử lý play button")
+                    lessons = self.handle_play_button_detected()
+                    if lessons:
+                        center_x, center_y = self.click_center(lessons[0])
+                        self._log(f"Click vào lesson đầu tiên tại ({center_x}, {center_y})")
+                        
+                        if self.on_stats_update:
+                            self.on_stats_update('lessons_clicked')
+                        
+                        # Thêm delay ngắn để tránh click liên tiếp
+                        for i in range(20):  # 2 seconds delay với khả năng thoát sớm
+                            if not self.is_running:
+                                return
+                            time.sleep(0.1)
+                    else:
+                        self._log("Có lỗi khi xử lý play button hoặc không tìm thấy lesson mới")
                         break
                 else:
                     self._log("Không phát hiện Play button - Video vẫn đang chạy")
@@ -476,7 +408,7 @@ class AutomationCore:
             self._log(f"❌ Lỗi auto restart: {str(e)}")
     
     def scroll_and_find_lessons_or_expand(self, scroll_pos: Optional[Tuple[int, int]] = None, 
-                                          max_scrolls: int = 20) -> bool:
+                                          max_scrolls: int = 20) -> list:
         """
         Scroll xuống liên tục để tìm lessons hoặc expand button mới
         
@@ -485,12 +417,12 @@ class AutomationCore:
             max_scrolls: Số lần scroll tối đa
         
         Returns:
-            bool: True nếu tìm thấy và xử lý thành công lessons, False nếu không
+            list: Danh sách lessons tìm được hoặc [] nếu không có
         """
         try:
             # Kiểm tra trạng thái trước khi bắt đầu
             if not self.is_running:
-                return False
+                return []
                 
             # Sử dụng vị trí 20% trục X và 50% trục Y của màn hình để scroll
             screen_width, screen_height = pyautogui.size()
@@ -507,7 +439,7 @@ class AutomationCore:
                 # Đợi với khả năng thoát sớm
                 for i in range(5):  # 0.5 giây
                     if not self.is_running:
-                        return False
+                        return []
                     time.sleep(0.1)
                 
                 # Scroll xuống tại vị trí đã định
@@ -516,7 +448,7 @@ class AutomationCore:
                 # Đợi scroll hoàn thành với khả năng thoát sớm
                 for i in range(10):  # 1 giây
                     if not self.is_running:
-                        return False
+                        return []
                     time.sleep(0.1)
                 
                 scroll_count += 1
@@ -526,65 +458,33 @@ class AutomationCore:
                 lessons = self.image_detector.detect_all_lesson_images()
                 if lessons and self.is_running:
                     self._log(f"Tìm thấy {len(lessons)} lesson(s) sau {scroll_count} lần scroll")
-                    # Click vào lesson đầu tiên
-                    center_x, center_y = self.click_center(lessons[0])
-                    self._log(f"Click vào lesson đầu tiên tại ({center_x}, {center_y})")
-                    
-                    if self.on_stats_update:
-                        self.on_stats_update('lessons_clicked')
-                    
-                    # Delay với khả năng thoát sớm
-                    for i in range(20):  # 2 giây
-                        if not self.is_running:
-                            return False
-                        time.sleep(0.1)
-                    return True
+                    return lessons
                 
                 # Kiểm tra có expand button mới không
                 expand_btn = self.image_detector.detect_expand_button()
                 if expand_btn and self.is_running:
                     self._log(f"Tìm thấy expand button mới sau {scroll_count} lần scroll")
-                    # Click expand button
                     center_x, center_y = self.click_center(expand_btn)
                     self._log(f"Click Expand button tại ({center_x}, {center_y})")
-                    
                     if self.on_stats_update:
                         self.on_stats_update('expand_clicks')
-                    
-                    # Đợi expand với khả năng thoát sớm
-                    for i in range(20):  # 2 giây
+                    for i in range(20):
                         if not self.is_running:
-                            return False
+                            return []
                         time.sleep(0.1)
-                    
-                    # Tìm lessons sau khi expand
                     lessons = self.image_detector.detect_all_lesson_images()
                     if lessons and self.is_running:
-                        center_x, center_y = self.click_center(lessons[0])
                         self._log(f"Click lesson sau expand tại ({center_x}, {center_y})")
-                        
-                        if self.on_stats_update:
-                            self.on_stats_update('lessons_clicked')
-                        
-                        # Delay cuối cùng
-                        for i in range(20):  # 2 giây
-                            if not self.is_running:
-                                return False
-                            time.sleep(0.1)
-                        return True
+                        return lessons
                     else:
-                        # Không có lesson sau expand, tiếp tục scroll tại vị trí chuẩn
                         self._log("Không tìm thấy lesson sau expand, tiếp tục scroll tại vị trí chuẩn...")
-                        # Không thay đổi scroll_x, scroll_y - giữ nguyên vị trí scroll chuẩn
                         continue
-                        
             self._log(f"Không tìm thấy lesson hoặc expand button sau {max_scrolls} lần scroll")
-            return False
-            
+            return []
         except Exception as e:
             self._log(f"Lỗi khi scroll tìm lesson/expand: {str(e)}")
-            return False
-    
+            return []
+
     def get_standard_scroll_position(self) -> Tuple[int, int]:
         """
         Lấy vị trí scroll chuẩn (20% trục X, 50% trục Y của màn hình)
