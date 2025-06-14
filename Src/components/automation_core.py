@@ -12,6 +12,10 @@ from components.image_detector import ImageDetector
 class AutomationCore:
     """Class chứa logic automation chính"""
     
+    # Cấu hình tọa độ % có thể tùy chỉnh cho các thiết bị khác nhau
+    SCROLL_X_PERCENT = 0.15  # 15% chiều rộng màn hình cho vị trí scroll
+    SCROLL_Y_PERCENT = 0.50  # 50% chiều cao màn hình cho vị trí scroll
+    
     def __init__(self):
         self.image_detector = ImageDetector()
         self.is_running = False
@@ -46,6 +50,70 @@ class AutomationCore:
         else:
             print(message)
     
+    def get_screen_position(self, x_percent: float, y_percent: float) -> Tuple[int, int]:
+        """
+        Tính toán tọa độ thực từ phần trăm màn hình
+        
+        Args:
+            x_percent: Phần trăm chiều rộng màn hình (0.0 - 1.0)
+            y_percent: Phần trăm chiều cao màn hình (0.0 - 1.0)
+            
+        Returns:
+            Tuple[int, int]: Tọa độ thực (x, y)
+        """
+        screen_width, screen_height = pyautogui.size()
+        x = int(screen_width * x_percent)
+        y = int(screen_height * y_percent)
+        return x, y
+    
+    def get_standard_scroll_position(self) -> Tuple[int, int]:
+        """
+        Lấy vị trí scroll chuẩn từ cấu hình % tọa độ
+        
+        Returns:
+            Tuple[int, int]: Tọa độ để scroll
+        """
+        return self.get_screen_position(self.SCROLL_X_PERCENT, self.SCROLL_Y_PERCENT)
+    
+    def move_mouse_to_percent(self, x_percent: float, y_percent: float, duration: float = 0.2):
+        """
+        Di chuyển chuột đến vị trí phần trăm màn hình
+        
+        Args:
+            x_percent: Phần trăm chiều rộng màn hình (0.0 - 1.0)
+            y_percent: Phần trăm chiều cao màn hình (0.0 - 1.0)  
+            duration: Thời gian di chuyển (giây)
+        """
+        x, y = self.get_screen_position(x_percent, y_percent)
+        pyautogui.moveTo(x, y, duration=duration)
+    
+    def click_at_percent(self, x_percent: float, y_percent: float):
+        """
+        Click tại vị trí phần trăm màn hình
+        
+        Args:
+            x_percent: Phần trăm chiều rộng màn hình (0.0 - 1.0)
+            y_percent: Phần trăm chiều cao màn hình (0.0 - 1.0)
+        """
+        x, y = self.get_screen_position(x_percent, y_percent)
+        pyautogui.click(x, y)
+    
+    def scroll_at_percent(self, x_percent: float, y_percent: float, scroll_amount: int = -200):
+        """
+        Scroll tại vị trí phần trăm màn hình
+        
+        Args:
+            x_percent: Phần trăm chiều rộng màn hình (0.0 - 1.0)
+            y_percent: Phần trăm chiều cao màn hình (0.0 - 1.0)
+            scroll_amount: Số đơn vị scroll (âm = xuống, dương = lên)
+        """
+        x, y = self.get_screen_position(x_percent, y_percent)
+        # Di chuyển chuột đến vị trí scroll
+        pyautogui.moveTo(x, y)
+        time.sleep(0.2)
+        # Scroll tại vị trí đã định
+        pyautogui.scroll(scroll_amount, x=x, y=y)
+
     def start_automation(self):
         """Bắt đầu automation"""
         if self.is_running:
@@ -95,17 +163,15 @@ class AutomationCore:
             Optional[Tuple[int, int, int, int]]: Vị trí expand button mới hoặc None
         """
         try:
-            # Sử dụng vị trí 20% trục X và 50% trục Y của màn hình để scroll
-            screen_width, screen_height = pyautogui.size()
-            scroll_x = int(screen_width * 0.15)  # 20% của chiều rộng màn hình
-            scroll_y = int(screen_height * 0.5)  # 50% của chiều cao màn hình
+            # Sử dụng vị trí scroll chuẩn (15% X, 50% Y của màn hình)
+            scroll_x, scroll_y = self.get_standard_scroll_position()
             
             scroll_count = 0
             
-            self._log(f"Bắt đầu scroll tại vị trí ({scroll_x}, {scroll_y}) - 20% X, 50% Y màn hình để tìm expand button tiếp theo")
+            self._log(f"Bắt đầu scroll tại vị trí ({scroll_x}, {scroll_y}) - 15% X, 50% Y màn hình để tìm expand button tiếp theo")
             
             while scroll_count < max_scrolls:
-                # Di chuyển chuột đến vị trí scroll và click để focus
+                # Di chuyển chuột đến vị trí scroll
                 pyautogui.moveTo(scroll_x, scroll_y)
                 
                 time.sleep(0.5)
@@ -457,21 +523,18 @@ class AutomationCore:
         Returns:
             list: Danh sách lessons tìm được hoặc [] nếu không có
         """
-        try:
-            # Kiểm tra trạng thái trước khi bắt đầu
+        try:            # Kiểm tra trạng thái trước khi bắt đầu
             if not self.is_running:
                 return []
                 
-            # Sử dụng vị trí 20% trục X và 50% trục Y của màn hình để scroll
-            screen_width, screen_height = pyautogui.size()
-            scroll_x = int(screen_width * 0.15)  # 20% của chiều rộng màn hình
-            scroll_y = int(screen_height * 0.5)  # 50% của chiều cao màn hình
+            # Sử dụng vị trí scroll chuẩn (15% X, 50% Y của màn hình)
+            scroll_x, scroll_y = self.get_standard_scroll_position()
             
             scroll_count = 0
-            self._log(f"Bắt đầu scroll liên tục tại vị trí ({scroll_x}, {scroll_y}) - 20% X, 50% Y màn hình để tìm lesson hoặc expand button")
+            self._log(f"Bắt đầu scroll liên tục tại vị trí ({scroll_x}, {scroll_y}) - 15% X, 50% Y màn hình để tìm lesson hoặc expand button")
             
             while scroll_count < max_scrolls and self.is_running:
-                # Di chuyển chuột đến vị trí scroll và click để focus
+                # Di chuyển chuột đến vị trí scroll
                 pyautogui.moveTo(scroll_x, scroll_y)
                 
                 # Đợi với khả năng thoát sớm
@@ -523,18 +586,6 @@ class AutomationCore:
             self._log(f"Lỗi khi scroll tìm lesson/expand: {str(e)}")
             return []
 
-    def get_standard_scroll_position(self) -> Tuple[int, int]:
-        """
-        Lấy vị trí scroll chuẩn (20% trục X, 50% trục Y của màn hình)
-        
-        Returns:
-            Tuple[int, int]: Tọa độ (x, y) để scroll
-        """
-        screen_width, screen_height = pyautogui.size()
-        scroll_x = int(screen_width * 0.15)  # 15% của chiều rộng màn hình
-        scroll_y = int(screen_height * 0.5)  # 50% của chiều cao màn hình
-        return scroll_x, scroll_y
-    
     def scroll_at_position(self, scroll_x: int, scroll_y: int, scroll_amount: int = -200):
         """
         Scroll tại vị trí cụ thể với chuẩn bị di chuyển chuột trước
@@ -553,3 +604,41 @@ class AutomationCore:
         
         # Scroll tại vị trí đã định
         pyautogui.scroll(scroll_amount, x=scroll_x, y=scroll_y)
+    
+    def configure_scroll_position(self, x_percent: float = 0.15, y_percent: float = 0.50):
+        """
+        Cấu hình lại vị trí scroll % cho thiết bị cụ thể
+        
+        Args:
+            x_percent: Phần trăm chiều rộng màn hình (0.0 - 1.0), mặc định 0.15 (15%)
+            y_percent: Phần trăm chiều cao màn hình (0.0 - 1.0), mặc định 0.50 (50%)
+        """
+        self.SCROLL_X_PERCENT = x_percent
+        self.SCROLL_Y_PERCENT = y_percent
+        self._log(f"Cấu hình vị trí scroll: {x_percent*100:.1f}% X, {y_percent*100:.1f}% Y")
+    
+    def get_screen_info(self) -> dict:
+        """
+        Lấy thông tin màn hình hiện tại
+        
+        Returns:
+            dict: Thông tin chi tiết về màn hình và vị trí scroll
+        """
+        screen_width, screen_height = pyautogui.size()
+        scroll_x, scroll_y = self.get_standard_scroll_position()
+        
+        return {
+            'screen_width': screen_width,
+            'screen_height': screen_height,
+            'scroll_x_percent': self.SCROLL_X_PERCENT,
+            'scroll_y_percent': self.SCROLL_Y_PERCENT,
+            'scroll_x_actual': scroll_x,
+            'scroll_y_actual': scroll_y,
+            'resolution': f"{screen_width}x{screen_height}"
+        }
+    
+    def log_screen_info(self):
+        """Log thông tin màn hình hiện tại"""
+        info = self.get_screen_info()
+        self._log(f"Thông tin màn hình: {info['resolution']}")
+        self._log(f"Vị trí scroll: ({info['scroll_x_actual']}, {info['scroll_y_actual']}) = {info['scroll_x_percent']*100:.1f}%, {info['scroll_y_percent']*100:.1f}%")
