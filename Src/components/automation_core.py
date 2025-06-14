@@ -132,20 +132,20 @@ class AutomationCore:
     def handle_play_button_detected(self):
 
         try:
-            self.log("Phát hiện play button, đang tìm lessons...")
+            self._log("Phát hiện play button, đang tìm lessons...")
             
             # Tìm tất cả lessons hiện có
             lessons = self.image_detector.detect_all_lesson_images()
             
             if lessons:
-                self.log(f"Tìm thấy {len(lessons)} lesson(s)")
+                self._log(f"Tìm thấy {len(lessons)} lesson(s)")
 
                 # Click vào lesson đầu tiên
                 first_lesson = lessons[0]
                 center_x = first_lesson['left'] + first_lesson['width'] // 2
                 center_y = first_lesson['top'] + first_lesson['height'] // 2
 
-                self.log(f"Click vào lesson đầu tiên tại ({center_x}, {center_y})")
+                self._log(f"Click vào lesson đầu tiên tại ({center_x}, {center_y})")
 
                 # Đảm bảo con trỏ được di chuyển đến vị trí lesson trước khi click
                 pyautogui.moveTo(center_x, center_y, duration=0.5)
@@ -159,11 +159,11 @@ class AutomationCore:
                 
                 return True
             else:
-                self.log("Không tìm thấy lesson nào sau khi phát hiện play button")
+                self._log("Không tìm thấy lesson nào sau khi phát hiện play button")
                 return False
                 
         except Exception as e:
-            self.log(f"Lỗi khi xử lý play button: {str(e)}")
+            self._log(f"Lỗi khi xử lý play button: {str(e)}")
             return False
     
     def handle_no_lessons_scenario(self) -> list:
