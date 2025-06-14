@@ -368,8 +368,7 @@ class AutomationCore:
             self._log("Tìm thấy Refresh button")
         else:
             self._log("Không tìm thấy Refresh button")
-              
-        # Test detect expand button
+                # Test detect expand button
         expand_btn = self.image_detector.detect_expand_button()
         if expand_btn:
             self._log("Tìm thấy Expand button")
@@ -377,7 +376,7 @@ class AutomationCore:
             self._log("Không tìm thấy Expand button")
             
         self._log("=== Kết thúc test detect ===")
-    
+
     def auto_restart(self):
         """Tự động restart automation"""
         try:

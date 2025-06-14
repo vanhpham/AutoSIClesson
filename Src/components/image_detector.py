@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import os
 from typing import List, Tuple, Optional
+from components.asset_manager import AssetManager
 
 
 class ImageDetector:
@@ -14,29 +15,19 @@ class ImageDetector:
     
     def __init__(self, assets_path: str = "Assets"):
         self.assets_path = assets_path
+        self.asset_manager = AssetManager(assets_path)
     
-    def _load_template(self, template_name: str) -> Optional[np.ndarray]:
+    def _load_template(self, asset_key: str) -> Optional[np.ndarray]:
         """
-        Load template image
+        Load template image thông qua AssetManager
         
         Args:
-            template_name: Tên file template
+            asset_key: Key của asset trong AssetManager
             
         Returns:
             Template image hoặc None nếu không load được
         """
-        template_path = os.path.join(self.assets_path, template_name)
-        
-        if not os.path.exists(template_path):
-            print(f"Không tìm thấy file template: {template_path}")
-            return None
-        
-        template = cv2.imread(template_path)
-        if template is None:
-            print(f"Không thể đọc file template: {template_path}")
-            return None
-            
-        return template
+        return self.asset_manager.get_asset_template(asset_key)
     
     def _get_screenshot(self) -> np.ndarray:
         """
@@ -89,7 +80,7 @@ class ImageDetector:
             được sắp xếp từ trên xuống dưới theo tọa độ y
         """
         try:
-            template = self._load_template("Lesson_unfinish_image.png")
+            template = self._load_template("lesson_unfinish")
             if template is None:
                 return []
             
@@ -135,7 +126,7 @@ class ImageDetector:
             Optional[Tuple[int, int, int, int]]: Vị trí (x, y, width, height) hoặc None nếu không tìm thấy
         """
         try:
-            template = self._load_template("Play_button.png")
+            template = self._load_template("play_button")
             if template is None:
                 return None
             
@@ -172,7 +163,7 @@ class ImageDetector:
             Optional[Tuple[int, int, int, int]]: Vị trí (x, y, width, height) hoặc None nếu không tìm thấy
         """
         try:
-            template = self._load_template("Refresh_page.png")
+            template = self._load_template("refresh_button")
             if template is None:
                 return None
             
@@ -209,7 +200,7 @@ class ImageDetector:
             Optional[Tuple[int, int, int, int]]: Vị trí (x, y, width, height) hoặc None nếu không tìm thấy
         """
         try:
-            template = self._load_template("Expand.png")
+            template = self._load_template("expand_button")
             if template is None:
                 return None
             
@@ -251,3 +242,61 @@ class ImageDetector:
         except Exception as e:
             print(f"Lỗi khi detect Expand button: {str(e)}")
             return None
+    
+    def test_detect_all_assets(self) -> dict:
+        """
+        Test detect tất cả assets thông qua AssetManager
+        
+        Returns:
+            Dictionary chứa kết quả test cho tất cả assets
+        """
+        return self.asset_manager.test_detect_all_assets()
+    
+    def test_detect_asset(self, asset_key: str, threshold: float = 0.8) -> dict:
+        """
+        Test detect một asset cụ thể
+        
+        Args:
+            asset_key: Key của asset cần test
+            threshold: Ngưỡng để xác định match
+            
+        Returns:
+            Dictionary chứa kết quả test
+        """
+        return self.asset_manager.test_detect_asset(asset_key, threshold)
+    
+    def get_assets_summary(self) -> str:
+        """
+        Lấy tóm tắt trạng thái assets
+        
+        Returns:
+            String tóm tắt trạng thái
+        """
+        return self.asset_manager.get_assets_summary()
+    
+    def reload_all_assets(self) -> bool:
+        """
+        Reload tất cả assets
+        
+        Returns:
+            bool: True nếu reload thành công tất cả
+        """
+        return self.asset_manager.reload_all_assets()
+    
+    def get_detection_stats(self) -> dict:
+        """
+        Lấy thống kê detection cho tất cả assets
+        
+        Returns:
+            Dictionary chứa thống kê
+        """
+        return self.asset_manager.get_detection_stats()
+    
+    def validate_assets(self) -> dict:
+        """
+        Kiểm tra tình trạng tất cả assets
+        
+        Returns:
+            Dictionary với trạng thái validate của từng asset
+        """
+        return self.asset_manager.validate_assets()

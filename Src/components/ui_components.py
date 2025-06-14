@@ -14,11 +14,10 @@ class AutoSICUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.setup_window()
-        self.setup_ui()
-        
-        # Callbacks
+        self.setup_ui()        # Callbacks
         self.on_toggle_automation: Optional[Callable] = None
         self.on_test_detect: Optional[Callable] = None
+        self.on_open_asset_manager: Optional[Callable] = None
         self.on_reset_auto_restart: Optional[Callable] = None
         self.on_reset_stats: Optional[Callable] = None
     
@@ -62,22 +61,24 @@ class AutoSICUI:
         # Nút bắt đầu/dừng
         self.start_button = ttk.Button(control_frame, text="Bắt đầu", 
                                       command=self._on_toggle_automation)
-        self.start_button.grid(row=0, column=0, padx=(0, 10), sticky=tk.W)
-        
-        # Nút test detect
+        self.start_button.grid(row=0, column=0, padx=(0, 10), sticky=tk.W)        # Nút test detect
         test_button = ttk.Button(control_frame, text="Test Detect", 
                                 command=self._on_test_detect)
         test_button.grid(row=0, column=1, padx=(0, 10), sticky=tk.W)
         
+        # Nút Asset Manager
+        asset_manager_button = ttk.Button(control_frame, text="Asset Manager", 
+                                         command=self._on_open_asset_manager)
+        asset_manager_button.grid(row=0, column=2, padx=(0, 10), sticky=tk.W)
+        
         # Nút reset auto restart
         reset_restart_button = ttk.Button(control_frame, text="Reset Auto Restart", 
                                          command=self._on_reset_auto_restart)
-        reset_restart_button.grid(row=0, column=2, padx=(0, 10), sticky=tk.W)
-        
-        # Trạng thái
+        reset_restart_button.grid(row=0, column=3, padx=(0, 10), sticky=tk.W)
+          # Trạng thái
         self.status_label = ttk.Label(control_frame, text="Trạng thái: Đã dừng", 
                                      foreground="red")
-        self.status_label.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(10, 0))
+        self.status_label.grid(row=1, column=0, columnspan=4, sticky=tk.W, pady=(10, 0))
     
     def _setup_step_frame(self, parent):
         """Thiết lập frame trạng thái bước"""
@@ -146,8 +147,7 @@ class AutoSICUI:
         reset_stats_button = ttk.Button(stats_frame, text="Reset Thống kê", 
                                        command=self._on_reset_stats)
         reset_stats_button.grid(row=5, column=0, columnspan=2, pady=(10, 0), sticky=tk.W)
-    
-    # Callback methods
+      # Callback methods
     def set_toggle_automation_callback(self, callback: Callable):
         """Thiết lập callback cho nút bắt đầu/dừng"""
         self.on_toggle_automation = callback
@@ -156,6 +156,10 @@ class AutoSICUI:
         """Thiết lập callback cho nút test detect"""
         self.on_test_detect = callback
     
+    def set_open_asset_manager_callback(self, callback: Callable):
+        """Thiết lập callback cho nút Asset Manager"""
+        self.on_open_asset_manager = callback
+    
     def set_reset_auto_restart_callback(self, callback: Callable):
         """Thiết lập callback cho nút reset auto restart"""
         self.on_reset_auto_restart = callback
@@ -163,7 +167,6 @@ class AutoSICUI:
     def set_reset_stats_callback(self, callback: Callable):
         """Thiết lập callback cho nút reset stats"""
         self.on_reset_stats = callback
-    
     def _on_toggle_automation(self):
         if self.on_toggle_automation:
             self.on_toggle_automation()
@@ -171,6 +174,10 @@ class AutoSICUI:
     def _on_test_detect(self):
         if self.on_test_detect:
             self.on_test_detect()
+    
+    def _on_open_asset_manager(self):
+        if self.on_open_asset_manager:
+            self.on_open_asset_manager()
     
     def _on_reset_auto_restart(self):
         if self.on_reset_auto_restart:

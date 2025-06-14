@@ -27,10 +27,10 @@ class AutoSICApp:
         self.is_running = False
     
     def setup_callbacks(self):
-        """Thiết lập các callbacks giữa các components"""
-        # UI callbacks
+        """Thiết lập các callbacks giữa các components"""        # UI callbacks
         self.ui.set_toggle_automation_callback(self.toggle_automation)
         self.ui.set_test_detect_callback(self.test_detect)
+        self.ui.set_open_asset_manager_callback(self.open_asset_manager)
         self.ui.set_reset_auto_restart_callback(self.reset_auto_restart)
         self.ui.set_reset_stats_callback(self.reset_stats)
         
@@ -118,10 +118,32 @@ class AutoSICApp:
         # Lên lịch cập nhật tiếp theo nếu đang chạy
         if self.is_running:
             self.root.after(5000, self.update_stats_display)  # Cập nhật mỗi 5 giây
-    
+
     def test_detect(self):
         """Test các function detect"""
         self.automation.test_detect()
+    
+    def open_asset_manager(self):
+        """Mở cửa sổ Asset Manager"""
+        try:
+            from components.asset_manager_ui import AssetManagerWindow
+            
+            # Tạo cửa sổ Asset Manager
+            asset_manager_window = AssetManagerWindow(self.root, "Assets")
+            
+            # Thiết lập callback khi asset được cập nhật
+            def on_asset_updated(asset_key):
+                self.ui.log_message(f"📦 Asset '{asset_key}' đã được cập nhật")
+                # Reload asset trong automation core
+                if hasattr(self.automation, 'image_detector'):
+                    self.automation.image_detector.reload_asset(asset_key)
+            
+            asset_manager_window.set_asset_updated_callback(on_asset_updated)
+            
+            self.ui.log_message("🔧 Đã mở Asset Manager")
+            
+        except Exception as e:
+            self.ui.log_message(f"❌ Lỗi khi mở Asset Manager: {str(e)}")
     
     def reset_auto_restart(self):
         """Reset bộ đếm auto restart"""
